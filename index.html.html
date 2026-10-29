@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>진로IT다 - 계열·학과·직업 짝 맞추기</title>
+<meta name="author" content="부산장안고등학교">
+<meta name="copyright" content="© 부산장안고등학교. All rights reserved.">
+<!-- © 부산장안고등학교. 무단 복제·수정·배포를 금합니다. -->
+<style>
+  .copyright-badge{
+    position: fixed; left: 0; right: 0; bottom: 6px; text-align: center;
+    font-size: 11px; color: rgba(245,243,238,0.55); z-index: 1000;
+    pointer-events: none; user-select: none; letter-spacing: 0.2px;
+    text-shadow: 0 0 4px rgba(10,13,26,0.9);
+  }
+  .app{ padding-bottom: 44px !important; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #1B2340;
+    --navy-card: #24325C;
+    --cream: #F5F3EE;
+    --gold: #FFC857;
+    --teal: #35C4B4;
+    --line: rgba(245,243,238,0.14);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: radial-gradient(circle at 20% -10%, #26305a 0%, var(--navy) 55%) fixed;
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+  }
+  .app{ max-width: 1240px; margin: 0 auto; padding: 24px 20px 50px; }
+
+  header.top{ text-align:center; margin-bottom: 18px; }
+  header.top h1{
+    font-family: 'Jua', sans-serif; font-weight: 400;
+    font-size: clamp(26px, 4.5vw, 42px);
+    margin: 0 0 6px; color: var(--gold);
+  }
+  header.top p{ margin:0; color: rgba(245,243,238,0.75); font-size: clamp(13px,2vw,16px); }
+
+  .layout{ display:flex; gap:28px; flex-wrap: wrap; justify-content:center; align-items:flex-start; }
+  .game-panel{ flex: 1 1 620px; max-width: 840px; }
+  .side-panel{ flex: 0 1 290px; min-width: 250px; }
+
+  .stepper{ display:flex; gap:8px; align-items:center; margin-bottom: 12px; flex-wrap:wrap; }
+  .step-chip{
+    padding: 5px 14px; border-radius:999px; font-size:13px; font-weight:700;
+    background: rgba(245,243,238,0.06); color: rgba(245,243,238,0.5);
+    border: 1px solid var(--line);
+  }
+  .step-chip.active{ background: rgba(255,200,87,0.18); color: var(--gold); border-color: rgba(255,200,87,0.5); }
+  .step-chip.done{ background: rgba(53,196,180,0.16); color: var(--teal); border-color: rgba(53,196,180,0.4); }
+  .mission{ font-size:14px; color: rgba(245,243,238,0.8); margin-bottom: 12px; }
+  .mission b{ color: var(--gold); }
+
+  .stats{
+    display:flex; justify-content: space-between; gap:10px;
+    background: rgba(245,243,238,0.06); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 18px; margin-bottom: 16px;
+  }
+  .stat{ text-align:center; flex:1; }
+  .stat .label{ font-size:12px; color: rgba(245,243,238,0.6); margin-bottom:2px; }
+  .stat .value{ font-family:'Jua',sans-serif; font-size: 20px; }
+
+  .board{ display:grid; gap: 10px; }
+  .card{ aspect-ratio: 5/6; perspective: 900px; cursor:pointer; }
+  .card.matched{ cursor: default; }
+  .card-inner{
+    position:relative; width:100%; height:100%;
+    transition: transform 0.5s cubic-bezier(.4,.2,.2,1);
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner, .card.matched .card-inner{ transform: rotateY(180deg); }
+  .card-face{
+    position:absolute; inset:0; backface-visibility: hidden;
+    border-radius: 12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding: 5px;
+  }
+  .card-front{
+    background: var(--navy-card); border: 1px solid rgba(245,243,238,0.12);
+    font-size: clamp(16px, 3vw, 28px);
+  }
+  .card-back{
+    transform: rotateY(180deg); color: #1B2340; font-weight: 700;
+    font-size: clamp(10px, 1.7vw, 14px); line-height:1.25;
+    word-break: keep-all; overflow-wrap: anywhere;
+    box-shadow: inset 0 0 0 2px rgba(27,35,64,0.12);
+  }
+  .card-back .tag{
+    font-size: 10px; font-weight: 500; opacity: .7; margin-bottom: 4px;
+    background: rgba(27,35,64,0.12); border-radius: 999px; padding: 1px 7px;
+  }
+  .board[data-cols="6"] .card-back{ font-size: clamp(9px, 1.35vw, 12.5px); }
+  .card.matched .card-back{ box-shadow: 0 0 0 3px var(--cream), 0 0 18px rgba(255,255,255,0.35); }
+
+  .controls{ display:flex; justify-content:center; gap:12px; margin-top:18px; flex-direction:column; align-items:center; }
+  .controls small{ color: rgba(245,243,238,0.5); font-size:12px; }
+  button{
+    font-family: 'Noto Sans KR', sans-serif; font-weight: 700;
+    border:none; border-radius: 999px; padding: 12px 24px; font-size: 15px;
+    cursor:pointer; transition: transform 0.15s ease;
+  }
+  button:active{ transform: scale(0.96); }
+  .btn-primary{ background: var(--gold); color: var(--navy); }
+  .btn-ghost{ background: transparent; color: var(--cream); border: 1px solid var(--line); }
+
+  .side-panel h2{ font-family:'Jua',sans-serif; font-weight:400; font-size:19px; color: var(--teal); margin: 0 0 4px; }
+  .side-panel .sub{ font-size:12px; color: rgba(245,243,238,0.55); margin-bottom:12px; }
+  .leaderboard{
+    background: rgba(245,243,238,0.06); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; min-height: 120px;
+  }
+  .leaderboard ol{ list-style:none; margin:0; padding:0; }
+  .leaderboard li{
+    display:flex; align-items:center; gap:10px; padding: 7px 0;
+    border-bottom: 1px solid rgba(245,243,238,0.08); font-size: 13px;
+  }
+  .leaderboard li:last-child{ border-bottom:none; }
+  .rank{
+    width: 22px; height:22px; border-radius:50%;
+    background: rgba(255,200,87,0.18); color: var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 12px; font-weight:700; flex-shrink:0;
+  }
+  .lb-name{ flex:1; overflow:hidden; line-height:1.3; min-width:0; }
+  .lb-name .nick{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
+  .lb-name .school{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; color: rgba(245,243,238,0.55); }
+  .lb-time{ color: var(--gold); font-weight:700; font-size:13px; }
+  .empty-note{ color: rgba(245,243,238,0.5); font-size:13px; text-align:center; padding: 20px 0; }
+  .admin-reset{ text-align:center; margin-top:10px; }
+  .admin-reset a{ color: rgba(245,243,238,0.35); font-size:11px; cursor:pointer; text-decoration:underline; }
+
+  .overlay{
+    position: fixed; inset:0; background: rgba(10,13,26,0.8);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 50; padding: 20px; overflow-y:auto;
+  }
+  .overlay.hidden{ display:none; }
+  .overlay-box{
+    background: var(--navy-card); border: 1px solid var(--line);
+    border-radius: 18px; padding: 30px 26px; max-width: 440px; width:100%;
+    text-align:center; margin: auto;
+  }
+  .overlay-box h2{ font-family:'Jua',sans-serif; font-weight:400; font-size:24px; color: var(--gold); margin: 0 0 8px; }
+  .overlay-box p{ color: rgba(245,243,238,0.78); font-size:14px; margin: 0 0 16px; line-height:1.55; }
+  .overlay-box input{
+    width:100%; padding: 12px 14px; border-radius:10px; border:1px solid var(--line);
+    background: rgba(245,243,238,0.08); color: var(--cream); font-size:15px;
+    margin-bottom:12px; font-family:'Noto Sans KR',sans-serif;
+  }
+  .overlay-box input::placeholder{ color: rgba(245,243,238,0.4); }
+  .field-error{ color:#FF8F85; font-size:13px; min-height:18px; margin-bottom:8px; }
+  .rules{
+    text-align:left; background: rgba(245,243,238,0.06); border-radius:12px;
+    padding: 12px 14px; font-size:13px; line-height:1.7; margin-bottom:16px; color: rgba(245,243,238,0.85);
+  }
+  .rules b{ color: var(--gold); }
+
+  .win-stats{ display:flex; justify-content:center; gap:22px; margin-bottom:16px; }
+  .win-stats .value{ font-family:'Jua',sans-serif; font-size:28px; color: var(--teal); }
+  .win-stats .label{ font-size:12px; color: rgba(245,243,238,0.6); }
+  .split-list{
+    background: rgba(245,243,238,0.06); border-radius:12px; padding: 8px 14px; margin-bottom:16px;
+    font-size:14px;
+  }
+  .split-list div{ display:flex; justify-content:space-between; padding: 5px 0; }
+  .split-list div span:last-child{ color: var(--gold); font-weight:700; }
+  .win-buttons{ display:flex; flex-direction:column; gap:10px; }
+
+  .confetti{
+    position:fixed; top:-10px; width:8px; height:14px; z-index:60; pointer-events:none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{ to{ transform: translateY(100vh) rotate(540deg); opacity:0.4; } }
+
+  @media (max-width:480px){
+    .board{ gap:6px; }
+    .stats{ padding:10px 8px; }
+    .stat .value{ font-size:17px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <h1>진로IT다: 계열·학과·직업 잇기</h1>
+    <p>3단계를 연속으로 도전하고, 가장 빠른 탐험가가 되어보세요!</p>
+  </header>
+
+  <div class="layout">
+    <div class="game-panel">
+      <div class="stepper" id="stepper">
+        <div class="step-chip" data-step="0">1단계</div>
+        <div class="step-chip" data-step="1">2단계</div>
+        <div class="step-chip" data-step="2">3단계</div>
+      </div>
+      <div class="mission" id="mission"></div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">누적 시간</div><div class="value" id="statTime">00:00</div></div>
+        <div class="stat"><div class="label">시도 횟수</div><div class="value" id="statMoves">0</div></div>
+        <div class="stat"><div class="label" id="statPairsLabel">맞춘 짝</div><div class="value" id="statPairs">0 / 8</div></div>
+      </div>
+
+      <div class="board" id="board" data-cols="4"></div>
+
+      <div class="controls">
+        <button class="btn-ghost" id="reshuffleBtn">이 단계 카드 다시 섞기</button>
+        <small>※ 다시 섞어도 누적 시간은 계속 흘러가요</small>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <h2>🏆 이 부스 최고 기록</h2>
+      <div class="sub">1~3단계 전체 완주 시간 기준 (TOP 10)</div>
+      <div class="leaderboard" id="leaderboard">
+        <div class="empty-note">아직 기록이 없어요. 첫 번째 도전자가 되어보세요!</div>
+      </div>
+      <div class="admin-reset"><a id="resetLbLink">기록 초기화 (운영자용)</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="overlay-box">
+    <h2>도전 준비 완료?</h2>
+    <p>학교와 닉네임을 적고 시작하세요.</p>
+    <input type="text" id="schoolInput" placeholder="학교 (예: 부산고)" maxlength="16" autocomplete="off">
+    <input type="text" id="nickInput" placeholder="닉네임" maxlength="10" autocomplete="off">
+    <div class="field-error" id="startError"></div>
+    <div class="rules">
+      <b>1단계</b> 계열 ↔ 학과 (4×4)<br>
+      <b>2단계</b> 학과 ↔ 직업 (4×5)<br>
+      <b>3단계</b> 계열 + 학과 + 직업 3장 맞추기 (4×6)<br>
+      첫 카드를 뒤집는 순간부터 시간이 흘러요!
+    </div>
+    <button class="btn-primary" id="startBtn" style="width:100%;">게임 시작</button>
+  </div>
+</div>
+
+<!-- Level clear overlay -->
+<div class="overlay hidden" id="levelOverlay">
+  <div class="overlay-box">
+    <h2 id="lvTitle">1단계 클리어! 🎉</h2>
+    <p id="lvMessage"></p>
+    <div class="win-stats">
+      <div><div class="value" id="lvTime">00:00</div><div class="label">이번 단계</div></div>
+      <div><div class="value" id="lvTotal">00:00</div><div class="label">누적 시간</div></div>
+    </div>
+    <div class="win-buttons">
+      <button class="btn-primary" id="nextLevelBtn" style="width:100%;">다음 단계 도전</button>
+    </div>
+  </div>
+</div>
+
+<!-- Final overlay -->
+<div class="overlay hidden" id="finalOverlay">
+  <div class="overlay-box">
+    <h2>전 단계 완주! 🏆</h2>
+    <p id="finalMessage"></p>
+    <div class="win-stats">
+      <div><div class="value" id="finalTime">00:00</div><div class="label">최종 스코어(총 시간)</div></div>
+      <div><div class="value" id="finalMoves">0</div><div class="label">총 시도 횟수</div></div>
+    </div>
+    <div class="split-list" id="finalSplits"></div>
+    <div class="win-buttons">
+      <button class="btn-primary" id="retryBtn" style="width:100%;">다시 도전</button>
+      <button class="btn-ghost" id="homeBtn" style="width:100%;">처음 화면으로</button>
+    </div>
+  </div>
+</div>
+
+<div class="copyright-badge" id="copyrightBadge">© 부산장안고등학교. All rights reserved.</div>
+
+<script>
+/* 저작권 표시 보호: 삭제·변조되면 즉시 복원 */
+(function(){
+  const TEXT = '© 부산장안고등학교. All rights reserved.';
+  function ensure(){
+    let el = document.getElementById('copyrightBadge');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'copyrightBadge';
+      el.className = 'copyright-badge';
+      document.body.appendChild(el);
+    }
+    if(el.textContent !== TEXT) el.textContent = TEXT;
+    if(el.className !== 'copyright-badge') el.className = 'copyright-badge';
+    if(el.getAttribute('style')) el.removeAttribute('style');
+    if(el.parentNode !== document.body) document.body.appendChild(el);
+  }
+  ensure();
+  new MutationObserver(ensure).observe(document.documentElement, {childList:true, subtree:true, attributes:true, characterData:true});
+  setInterval(ensure, 2000);
+})();
+</script>
+
+<script>
+/* ===== 구글 스프레드시트 연동 설정 =====
+   Apps Script 웹 앱 배포 후 받은 URL(https://script.google.com/macros/s/.../exec)을 아래 따옴표 안에 붙여넣으세요.
+   비워 두면 이 기기 안에만 기록이 저장됩니다. */
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyJk02JS-hcHMKHTKehVbIB0paQkvnbHzeNNwp7TmEnH-827A5dB4FRq-h6U-ED_RM9xg/exec';
+
+// 태블릿 구분용 이름: 주소 뒤에 ?device=1 처럼 붙여 한 번 열면 그 기기에 저장됩니다.
+const DEVICE = (()=>{
+  try{
+    const p = new URLSearchParams(location.search).get('device');
+    if(p) localStorage.setItem('deviceName', p);
+    let d = localStorage.getItem('deviceName');
+    if(!d){ d = 'T' + Math.floor(Math.random()*900+100); localStorage.setItem('deviceName', d); }
+    return d;
+  }catch(e){ return 'T?'; }
+})();
+const QUEUE_KEY = 'pending_queue_v1';
+const getQueue = () => { try{ return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }catch(e){ return []; } };
+const setQueue = q => { try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }catch(e){} };
+async function postToSheet(payload){
+  try{
+    await fetch(SHEET_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+    return true;
+  }catch(e){ return false; }
+}
+// 전송 실패(와이파이 끊김 등) 시 기기에 보관했다가 나중에 자동 재전송
+async function sendEvent(p){
+  if(!SHEET_URL) return false;
+  p.device = DEVICE;
+  if(await postToSheet(p)) return true;
+  const q = getQueue(); q.push(p); setQueue(q);
+  return false;
+}
+async function flushQueue(){
+  if(!SHEET_URL) return;
+  const q = getQueue(); if(!q.length) return;
+  const rest = [];
+  for(const p of q){ if(!(await postToSheet(p))) rest.push(p); }
+  setQueue(rest);
+}
+async function fetchRemoteTop(){
+  const r = await fetch(SHEET_URL + '?action=top', { cache:'no-store' });
+  const j = await r.json();
+  return j.top || [];
+}
+
+/* ===== 데이터: 「진로 잇(it)다」 인문·자연·예체능 나무 PDF 기준 ===== */
+// g: 계열, d: 대표 학과·전공, j: 관련 진출 직업군
+const ROWS = [
+  // 인문
+  {g:'인문', d:'국어국문학과·문예창작학과', j:['웹소설작가','출판 편집자','콘텐츠작가']},
+  {g:'인문', d:'영어영문학과·외국어학과', j:['통번역가','해외 콘텐츠번역가']},
+  {g:'인문', d:'사학과', j:['박물관학예사','역사 콘텐츠기획자']},
+  {g:'인문', d:'철학과', j:['철학 연구자','AI 윤리 전문가']},
+  {g:'인문', d:'문헌정보학과', j:['사서','디지털기록관리전문가']},
+  // 사회
+  {g:'사회', d:'정치외교학과·국제학과', j:['국제기구전문가','국제정세분석가']},
+  {g:'사회', d:'사회학과', j:['사회조사전문가','여론조사분석가']},
+  {g:'사회', d:'심리학과', j:['심리상담사','심리검사전문가']},
+  {g:'사회', d:'법학과', j:['변호사','기업 법률 전문가']},
+  {g:'사회', d:'미디어커뮤니케이션학과', j:['기자','영상 콘텐츠기획자','유튜브콘텐츠제작자']},
+  // 상경
+  {g:'상경', d:'경제학과', j:['경제 분석가','금융 분석가']},
+  {g:'상경', d:'경영학과', j:['브랜드기획자','온라인쇼핑몰창업가','마케팅전문가']},
+  {g:'상경', d:'회계학과·세무학과', j:['회계사','세무사']},
+  {g:'상경', d:'국제통상학과·무역학과', j:['무역 전문가','해외 구매 전문가']},
+  {g:'상경', d:'해운경영학부·물류 관련 학과', j:['해운회사물류 기획자','항만 물류 전문가']},
+  // 교육
+  {g:'교육', d:'국어교육과·영어교육과', j:['국어 교사','영어 교사','학습 콘텐츠개발자']},
+  {g:'교육', d:'일반사회교육과·역사교육과·지리교육과', j:['사회 교사','역사 교사','지리 교사']},
+  {g:'교육', d:'초등교육과', j:['초등학교교사','초등 학습 콘텐츠개발자']},
+  {g:'교육', d:'수학교육과·물리교육과·화학교육과·생물교육과·지구과학교육과', j:['과학 교사','과학 교육 콘텐츠개발자']},
+  {g:'교육', d:'체육교육과', j:['체육 교사']},
+  {g:'교육', d:'음악교육과', j:['음악교사']},
+  {g:'교육', d:'미술교육과', j:['미술교사']},
+  // 자연과학
+  {g:'자연과학', d:'수학과·통계학과', j:['수학 연구자','데이터분석가']},
+  {g:'자연과학', d:'물리학과·화학과', j:['반도체·신소재연구원','화학 연구원']},
+  {g:'자연과학', d:'생명과학과', j:['생명과학연구원','유전자연구원']},
+  {g:'자연과학', d:'해양환경학·해양생물관련 전공', j:['해양생물연구원','바다 환경 연구원']},
+  {g:'자연과학', d:'지구과학과·대기과학과', j:['기상 예보 전문가','기후 연구원']},
+  // 공학
+  {g:'공학', d:'컴퓨터공학과·인공지능학과', j:['앱 개발자','게임 개발자','정보보안전문가','AI 개발자']},
+  {g:'공학', d:'전기·전자공학과', j:['전자제품개발자','전기설비엔지니어','태양광·풍력 발전 전문가']},
+  {g:'공학', d:'기계공학과·로봇공학과·스마트팩토리', j:['로봇 개발자','자동화설비 엔지니어','스마트공장엔지니어']},
+  {g:'공학', d:'반도체관련 학과', j:['반도체엔지니어']},
+  {g:'공학', d:'미래자동차공학과', j:['전기차개발자','자율주행차개발자']},
+  {g:'공학', d:'건축학과·건축공학과', j:['건축가','친환경건축 엔지니어']},
+  {g:'공학', d:'조선해양시스템공학부·조선해양공학관련 전공', j:['선박 설계 엔지니어','친환경선박 개발자']},
+  {g:'공학', d:'해양공학과', j:['해양플랜트엔지니어','해양시설설계 전문가']},
+  {g:'공학', d:'항공우주공학관련 학과', j:['항공기설계 엔지니어','우주선개발자']},
+  {g:'공학', d:'스마트드론공학과·드론 관련 전공', j:['드론 개발자','드론 운용 전문가']},
+  // 의약·보건
+  {g:'의약·보건', d:'의학과·약학과·치의학과·수의학과', j:['의사','약사','치과의사','신약 연구원','수의사','동물질병연구원']},
+  {g:'의약·보건', d:'간호학과·치위생학과·물리치료학과·작업치료학과', j:['간호사','전문간호사','물리치료사','작업치료사','재활 전문가']},
+  // 미술·디자인
+  {g:'미술·디자인', d:'시각디자인학과·디자인학부', j:['그래픽디자이너','브랜드디자이너']},
+  {g:'미술·디자인', d:'산업디자인학과', j:['제품 디자이너','앱·웹 화면 디자이너(UX/UI)']},
+  {g:'미술·디자인', d:'웹툰·만화·애니메이션관련 학과', j:['웹툰 작가','캐릭터디자이너','애니메이터']},
+  {g:'미술·디자인', d:'패션디자인학과·의류학과', j:['패션 디자이너','의류 브랜드기획자']},
+  {g:'미술·디자인', d:'미술학과·회화과', j:['화가','전시 기획자']},
+  // 음악·공연·연기·영상
+  {g:'음악·공연·연기·영상', d:'작곡과·실용음악과', j:['작곡가','게임 음악 제작자','음악 프로듀서']},
+  {g:'음악·공연·연기·영상', d:'성악과', j:['성악가']},
+  {g:'음악·공연·연기·영상', d:'기악과', j:['연주자']},
+  {g:'음악·공연·연기·영상', d:'연극영화학과·영화영상학과', j:['배우','영상 감독','영상 편집자']},
+  {g:'음악·공연·연기·영상', d:'영상애니메이션·방송 관련 학과', j:['영상 크리에이터','특수효과제작자']},
+  // 체육·스포츠  (무용과의 직업군은 PDF에 영상 쪽 내용이 중복 표기되어 무용 직업으로 정정)
+  {g:'체육·스포츠', d:'무용과', j:['무용수','안무가']},
+  {g:'체육·스포츠', d:'체육학과·스포츠과학과', j:['스포츠데이터분석가','운동 코치']},
+  {g:'체육·스포츠', d:'스포츠산업관련 학과', j:['스포츠마케터','스포츠구단 운영 전문가']},
+  {g:'체육·스포츠', d:'스포츠재활관련 학과', j:['운동재활트레이너','선수 체력관리전문가']},
+  {g:'체육·스포츠', d:'해양스포츠과학과', j:['해양스포츠지도자','해양 레저 프로그램기획자']},
+];
+const GROUPS = [...new Set(ROWS.map(r=>r.g))];           // 10개 계열
+const gLabel = g => g + ' 계열';
+const PALETTE = ['#FF6B5E','#FFC857','#35C4B4','#5B8DEF','#E85D9E','#9B6BFF','#4CAF6D','#FF9F45','#6EC5E9','#C7D84A'];
+
+const LEVELS = [
+  { label:'1단계 초급', cols:4, group:2, total:8,  mission:'<b>계열</b>과 그에 속한 <b>학과</b> 카드를 찾아 짝을 맞춰요.' },
+  { label:'2단계 중급', cols:5, group:2, total:10, mission:'<b>학과</b>와 졸업 후 하는 <b>직업</b> 카드를 찾아 짝을 맞춰요.' },
+  { label:'3단계 고급', cols:6, group:3, total:8,  mission:'<b>계열 + 학과 + 직업</b> 카드 3장을 한 세트로 맞춰요. (카드 3장을 뒤집어요)' },
+];
+
+/* ===== 유틸 ===== */
+const shuffle = arr => { const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const fmt = ms => { const s=Math.floor(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+const escapeHtml = s => { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
+
+/* ===== 덱 생성 ===== */
+function buildDeck(li){
+  const cards = [];
+  const add = (pid, idx, type, text, color) => cards.push({uid:pid+'-'+type, pairId:pid, type, text, color});
+  if(li === 0){
+    shuffle(GROUPS).slice(0,8).forEach((g,i)=>{
+      const row = pick(ROWS.filter(r=>r.g===g));
+      add('a'+i,i,'계열',gLabel(g),PALETTE[i]);
+      add('a'+i,i,'학과',row.d,PALETTE[i]);
+    });
+  } else if(li === 1){
+    const usedJobs = new Set();
+    shuffle(ROWS).slice(0,10).forEach((row,i)=>{
+      let job = pick(row.j);
+      usedJobs.add(job);
+      add('b'+i,i,'학과',row.d,PALETTE[i]);
+      add('b'+i,i,'직업',job,PALETTE[i]);
+    });
+  } else {
+    shuffle(GROUPS).slice(0,8).forEach((g,i)=>{
+      const row = pick(ROWS.filter(r=>r.g===g));
+      add('c'+i,i,'계열',gLabel(g),PALETTE[i]);
+      add('c'+i,i,'학과',row.d,PALETTE[i]);
+      add('c'+i,i,'직업',pick(row.j),PALETTE[i]);
+    });
+  }
+  return shuffle(cards);
+}
+
+/* ===== 저장소 (아티팩트 shared storage 우선, 없으면 localStorage) ===== */
+const LB_KEY = 'leaderboard_total_v2';
+const store = {
+  async get(){
+    if(window.storage){
+      try{ const r = await window.storage.get(LB_KEY, true); return r ? JSON.parse(r.value) : []; }catch(e){ return []; }
+    }
+    try{ return JSON.parse(localStorage.getItem(LB_KEY) || '[]'); }catch(e){ return []; }
+  },
+  async set(arr){
+    if(window.storage){ try{ await window.storage.set(LB_KEY, JSON.stringify(arr), true); }catch(e){} return; }
+    try{ localStorage.setItem(LB_KEY, JSON.stringify(arr)); }catch(e){}
+  },
+  async clear(){
+    if(window.storage){ try{ await window.storage.delete(LB_KEY, true); }catch(e){} return; }
+    try{ localStorage.removeItem(LB_KEY); }catch(e){}
+  }
+};
+
+/* ===== 상태 ===== */
+let school = '', nick = '';
+let levelIdx = 0;
+let deck = [], flipped = [];
+let matchedCount = 0, levelMoves = 0, movesBase = 0;
+let locked = false;
+let accMs = 0, runStart = null, uiTimer = null;
+let levelBaseMs = 0;
+let levelTimes = [];
+
+const $ = id => document.getElementById(id);
+const boardEl = $('board');
+
+const nowTotal = () => accMs + (runStart ? Date.now() - runStart : 0);
+function startClock(){
+  if(runStart) return;
+  runStart = Date.now();
+  uiTimer = setInterval(()=>{ $('statTime').textContent = fmt(nowTotal()); }, 200);
+}
+function pauseClock(){
+  if(runStart){ accMs += Date.now() - runStart; runStart = null; }
+  clearInterval(uiTimer); uiTimer = null;
+  $('statTime').textContent = fmt(accMs);
+}
+
+/* ===== 화면 ===== */
+function updateStepper(){
+  document.querySelectorAll('.step-chip').forEach(el=>{
+    const i = Number(el.dataset.step);
+    el.classList.toggle('active', i === levelIdx);
+    el.classList.toggle('done', i < levelIdx);
+  });
+}
+function renderBoard(){
+  const cfg = LEVELS[levelIdx];
+  boardEl.dataset.cols = cfg.cols;
+  boardEl.style.gridTemplateColumns = `repeat(${cfg.cols}, 1fr)`;
+  boardEl.innerHTML = '';
+  deck.forEach(card=>{
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.uid = card.uid;
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-front">🎓</div>
+        <div class="card-face card-back" style="background:${card.color}">
+          <span class="tag">${card.type}</span><span class="txt"></span>
+        </div>
+      </div>`;
+    el.querySelector('.txt').textContent = card.text.replace(/·/g, '·\u200b');
+    el.addEventListener('click', ()=> onCardClick(card.uid));
+    boardEl.appendChild(el);
+  });
+}
+function updateStats(){
+  $('statMoves').textContent = movesBase + levelMoves;
+  const cfg = LEVELS[levelIdx];
+  $('statPairsLabel').textContent = cfg.group === 3 ? '맞춘 세트' : '맞춘 짝';
+  $('statPairs').textContent = `${matchedCount} / ${cfg.total}`;
+  $('statTime').textContent = fmt(nowTotal());
+}
+
+function startLevel(li){
+  levelIdx = li;
+  deck = buildDeck(li);
+  flipped = []; matchedCount = 0; levelMoves = 0; locked = false;
+  levelBaseMs = accMs;
+  $('mission').innerHTML = `<b>${LEVELS[li].label}</b> · ${LEVELS[li].mission}`;
+  updateStepper();
+  renderBoard();
+  updateStats();
+}
+
+function onCardClick(uid){
+  if(locked) return;
+  const el = boardEl.querySelector(`[data-uid="${uid}"]`);
+  const need = LEVELS[levelIdx].group;
+  if(!el || el.classList.contains('matched') || el.classList.contains('flipped')) return;
+  if(flipped.length >= need) return;
+
+  startClock();
+  el.classList.add('flipped');
+  flipped.push(uid);
+
+  if(flipped.length === need){
+    levelMoves++;
+    updateStats();
+    const cards = flipped.map(u => deck.find(c=>c.uid===u));
+    const ok = cards.every(c => c.pairId === cards[0].pairId);
+    if(ok){
+      flipped.forEach(u => boardEl.querySelector(`[data-uid="${u}"]`).classList.add('matched'));
+      flipped = [];
+      matchedCount++;
+      updateStats();
+      if(matchedCount === LEVELS[levelIdx].total) setTimeout(finishLevel, 650);
+    } else {
+      locked = true;
+      const uids = flipped.slice();
+      setTimeout(()=>{
+        uids.forEach(u => boardEl.querySelector(`[data-uid="${u}"]`)?.classList.remove('flipped'));
+        flipped = []; locked = false;
+      }, need === 3 ? 1100 : 850);
+    }
+  }
+}
+
+function launchConfetti(){
+  for(let i=0;i<28;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random()*100+'vw';
+    el.style.background = PALETTE[Math.floor(Math.random()*PALETTE.length)];
+    el.style.animationDuration = (2 + Math.random()*1.5)+'s';
+    document.body.appendChild(el);
+    setTimeout(()=> el.remove(), 4000);
+  }
+}
+
+function finishLevel(){
+  pauseClock();
+  launchConfetti();
+  const lvMs = accMs - levelBaseMs;
+  levelTimes[levelIdx] = lvMs;
+  movesBase += levelMoves; levelMoves = 0;
+  updateStats();
+
+  if(levelIdx < LEVELS.length - 1){
+    const next = LEVELS[levelIdx + 1];
+    $('lvTitle').textContent = `${LEVELS[levelIdx].label} 클리어! 🎉`;
+    $('lvMessage').innerHTML = `${escapeHtml(nick)}님, 잘했어요!<br>다음은 <b style="color:#FFC857">${next.label}</b>. 준비되면 버튼을 눌러요.<br>(버튼을 누르고 첫 카드를 뒤집을 때 시간이 다시 흘러요)`;
+    $('lvTime').textContent = fmt(lvMs);
+    $('lvTotal').textContent = fmt(accMs);
+    $('levelOverlay').classList.remove('hidden');
+  } else {
+    showFinal();
+  }
+}
+
+async function showFinal(){
+  const total = accMs;
+  $('finalMessage').textContent = `${school} ${nick}님, 3단계를 모두 완주했어요!`;
+  $('finalTime').textContent = fmt(total);
+  $('finalMoves').textContent = movesBase;
+  $('finalSplits').innerHTML = LEVELS.map((l,i)=>`<div><span>${l.label}</span><span>${fmt(levelTimes[i]||0)}</span></div>`).join('');
+  $('finalOverlay').classList.remove('hidden');
+
+  const entry = { school, nick, totalMs: total, moves: movesBase, lv: levelTimes.slice(), ts: Date.now() };
+  let arr = await store.get();
+  arr.push(entry);
+  arr.sort((a,b)=> a.totalMs - b.totalMs || a.moves - b.moves);
+  arr = arr.slice(0,10);
+  await store.set(arr);
+
+  if(SHEET_URL){
+    const fid = 'f' + entry.ts + DEVICE;
+    sendEvent({ type:'finish', id: fid, school, nick, totalMs: total, moves: movesBase, lv: levelTimes.slice(), ts: entry.ts })
+      .then(async ()=>{
+        await new Promise(r => setTimeout(r, 2500));
+        try{
+          const top = await fetchRemoteTop();
+          renderLeaderboard(top);
+          const rank = top.findIndex(e => e.id === fid);
+          if(rank >= 0) $('finalMessage').textContent += ` 오늘의 기록 ${rank+1}위! 🎖️`;
+        }catch(e){}
+      });
+  } else {
+    renderLeaderboard(arr);
+    const rank = arr.findIndex(e => e.ts === entry.ts);
+    if(rank >= 0) $('finalMessage').textContent += ` 오늘의 기록 ${rank+1}위! 🎖️`;
+  }
+}
+
+async function loadLeaderboard(){
+  if(SHEET_URL){
+    try{ renderLeaderboard(await fetchRemoteTop()); return; }catch(e){}
+  }
+  renderLeaderboard(await store.get());
+}
+function renderLeaderboard(arr){
+  const lb = $('leaderboard');
+  if(!arr || !arr.length){
+    lb.innerHTML = '<div class="empty-note">아직 기록이 없어요. 첫 번째 도전자가 되어보세요!</div>';
+    return;
+  }
+  lb.innerHTML = '<ol>' + arr.slice(0,10).map((e,i)=>`
+    <li>
+      <div class="rank">${i+1}</div>
+      <div class="lb-name"><span class="nick">${escapeHtml(e.nick||'탐험가')}</span><span class="school">${escapeHtml(e.school||'')}</span></div>
+      <div class="lb-time">${fmt(e.totalMs)}</div>
+    </li>`).join('') + '</ol>';
+}
+
+function resetAll(){
+  pauseClock();
+  accMs = 0; movesBase = 0; levelMoves = 0; levelTimes = [];
+  startLevel(0);
+  sendEvent({ type:'start', id: 's' + Date.now() + DEVICE, school, nick, ts: Date.now() });
+}
+
+/* ===== 이벤트 ===== */
+$('startBtn').addEventListener('click', ()=>{
+  const s = $('schoolInput').value.trim();
+  const n = $('nickInput').value.trim();
+  if(!s || !n){ $('startError').textContent = '학교와 닉네임을 모두 입력해주세요.'; return; }
+  $('startError').textContent = '';
+  school = s; nick = n;
+  $('startOverlay').classList.add('hidden');
+  resetAll();
+});
+['schoolInput','nickInput'].forEach(id=>{
+  $(id).addEventListener('keydown', e=>{ if(e.key==='Enter') $('startBtn').click(); });
+});
+$('nextLevelBtn').addEventListener('click', ()=>{
+  $('levelOverlay').classList.add('hidden');
+  startLevel(levelIdx + 1);
+});
+$('retryBtn').addEventListener('click', ()=>{
+  $('finalOverlay').classList.add('hidden');
+  resetAll();
+});
+$('homeBtn').addEventListener('click', ()=>{
+  $('finalOverlay').classList.add('hidden');
+  $('schoolInput').value = ''; $('nickInput').value = '';
+  $('startOverlay').classList.remove('hidden');
+});
+$('reshuffleBtn').addEventListener('click', ()=>{
+  if(locked) return;
+  const base = levelBaseMs;   // 단계 시작 시점 유지 (다시 섞어도 단계 시간 누적)
+  startLevel(levelIdx);
+  levelBaseMs = base;
+  updateStats();
+});
+$('resetLbLink').addEventListener('click', async ()=>{
+  if(confirm('리더보드 기록을 모두 초기화할까요?')){
+    await store.clear();
+    renderLeaderboard([]);
+  }
+});
+
+updateStepper();
+$('mission').innerHTML = '';
+if(SHEET_URL) $('resetLbLink').style.display = 'none';   // 공동 기록은 스프레드시트에서 관리
+loadLeaderboard();
+flushQueue();
+setInterval(()=>{ flushQueue(); loadLeaderboard(); }, 30000);
+</script>
+</body>
+</html>
